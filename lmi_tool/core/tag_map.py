@@ -155,3 +155,5 @@ TAG_MAP = {
     "cal_target_l_mm": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.TargetL_mm",
     "cal_stable_count": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.StableCount",
 }
+def build_flat_tag_map():
+    return TAG_MAP.copy()
