@@ -46,7 +46,7 @@ QFrame {
 
 BAR_FILL = """
 QFrame {
-    background: #536D7E;
+    background: #6C537C;
     border: none;
     border-radius: 10px;
 }
@@ -94,7 +94,7 @@ class StatusBadge(QtWidgets.QLabel):
 
 
 class PressureRow(QtWidgets.QWidget):
-    def __init__(self, name: str, unit: str = "bar", max_value: float = 400.0, parent=None):
+    def __init__(self, name: str, unit: str = "bar", max_value: float = 420.0, parent=None):
         super().__init__(parent)
         self.max_value = max_value
         self.unit = unit

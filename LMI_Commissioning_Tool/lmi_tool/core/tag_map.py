@@ -28,14 +28,29 @@ TAG_GROUPS = {
         "ballast_fault": "ns=5;s=::LoadLimite:FB_CET12_CanOpen_Validate_Ballas.Fault",
         "ballast_fault_code": "ns=5;s=::LoadLimite:FB_CET12_CanOpen_Validate_Ballas.FaultCode",
 
-        # PRESSURE
+           
+         # PRESSURE
         "ph1a_p_bar": "ns=5;s=::LoadLimite:PH1A_FB_Pr4Pressure.P_bar",
         "ph1b_p_bar": "ns=5;s=::LoadLimite:PH1B_FB_Pr4Pressure.P_bar",
         "pl1a_p_bar": "ns=5;s=::LoadLimite:PL1A_FB_Pr4Pressure.P_bar",
         "pl1b_p_bar": "ns=5;s=::LoadLimite:PL1B_FB_Pr4Pressure.P_bar",
 
+        "fondello_p1_bar": "ns=5;s=::LoadLimite:Fondello_FB_PressurePair.P1_bar",
+        "fondello_p2_bar": "ns=5;s=::LoadLimite:Fondello_FB_PressurePair.P2_bar",
         "fondello_p_used_bar": "ns=5;s=::LoadLimite:Fondello_FB_PressurePair.P_used_bar",
+        "fondello_warn": "ns=5;s=::LoadLimite:Fondello_FB_PressurePair.Warn",
+        "fondello_fault": "ns=5;s=::LoadLimite:Fondello_FB_PressurePair.Fault",
+
+        "stelo_p1_bar": "ns=5;s=::LoadLimite:Stelo_FB_PressurePair.P1_bar",
+        "stelo_p2_bar": "ns=5;s=::LoadLimite:Stelo_FB_PressurePair.P2_bar",
         "stelo_p_used_bar": "ns=5;s=::LoadLimite:Stelo_FB_PressurePair.P_used_bar",
+        "stelo_warn": "ns=5;s=::LoadLimite:Stelo_FB_PressurePair.Warn",
+        "stelo_fault": "ns=5;s=::LoadLimite:Stelo_FB_PressurePair.Fault",
+    
+    
+    
+    
+    
     },
 
     "geometry": {
