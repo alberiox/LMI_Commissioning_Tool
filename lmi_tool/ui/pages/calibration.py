@@ -631,8 +631,8 @@ class CalibrationPage(QtWidgets.QWidget):
             target_l = self._get(d, "cal_target_l_mm", "calib_target_l_mm", "target_l_mm", "g_lm_calibhmi_targetl_mm")
             err_alpha = self._get(d, "cal_err_alpha_deg", "calib_err_alpha_deg", "err_alpha_deg", "g_lm_calibhmi_erralphadeg")
             err_l = self._get(d, "cal_err_l_mm", "calib_err_l_mm", "err_l_mm", "g_lm_calibhmi_errl_mm")
-            active_i_alpha = self._get(d, "cal_active_ialpha", "calib_active_i_alpha", "active_i_alpha", "g_lm_calibhmi_active_ialpha")
-            active_i_l = self._get(d, "cal_active_il", "calib_active_i_l", "active_i_l", "g_lm_calibhmi_active_il")
+            active_i_alpha = self._get(d, "cal_active_i_alpha", "calib_active_i_alpha", "active_i_alpha", "g_lm_calibhmi_active_i_alpha")
+            active_i_l = self._get(d, "cal_active_i_l", "calib_active_i_l", "active_i_l", "g_lm_calibhmi_active_i_l")
             alpha_tol = self._get(d, "cal_alpha_tol_deg", "calib_alpha_tol_deg", "alpha_tol_deg", "g_lm_calibhmi_alphatoldeg")
             l_tol = self._get(d, "cal_l_tol_mm", "calib_l_tol_mm", "l_tol_mm", "g_lm_calibhmi_ltol_mm")
             stable_req = self._get(d, "cal_stable_cycles_req", "calib_stable_cycles_req", "stable_cycles_req", "g_lm_calibhmi_stablecyclesreq", default=10)
@@ -675,7 +675,13 @@ class CalibrationPage(QtWidgets.QWidget):
             self.progress.setFormat(f"{cnt} / {req} cycles")
             self._update_readiness(in_tol, is_stable, ready_store)
 
-            result_state = "OK" if _safe_bool(last_store_ok, False) else ("READY" if _safe_bool(ready_store, False) else "NO DATA")
+            #result_state = "OK" if _safe_bool(last_store_ok, False) else ("READY" if _safe_bool(ready_store, False) else "NO DATA")
+            if last_stored_value is not None:
+                result_state = "OK" if _safe_bool(last_store_ok, False) else "IDLE"
+            else:
+                result_state = "READY" if _safe_bool(ready_store, False) else "NO DATA"
+
+
             self.last_value.set_value(_fmt(last_stored_value, 3), result_state if last_stored_value is not None else "NO DATA")
             self.m_ref.set_value(_fmt(m_ref, 1, "kg"), "OK" if m_ref is not None else "NO DATA")
             self.m_model.set_value(_fmt(m_model, 1, "kg"), "OK" if m_model is not None else "NO DATA")

@@ -87,6 +87,47 @@ class OpcUaSource(QtCore.QObject):
 
     def _emit_snapshot(self):
         cur = int(self._latest.get("cur_sel") or 12)
+         # ✅ DEBUG PRINT - CORRETTO
+        print("\n" + "="*70)
+        print(f"📊 OPC-UA VALUES @ {time.time():.3f}")  # ✅ Usa time.time() invece
+        print("="*70)
+    
+        print("\n🔵 LIMITER:")
+        print(f"  util_pct={self._latest.get('util_pct')} | warning={self._latest.get('warning')} | overload={self._latest.get('overload')}")
+        print(f"  cap_t={self._latest.get('cap_t')} | load_f_t={self._latest.get('load_f_t')} | margin_t={self._latest.get('margin_t')}")
+    
+        print("\n🟢 BOOM:")
+        print(f"  pos_meas={self._latest.get('boom_pos_mm_meas')} | pos={self._latest.get('boom_pos_mm')}")
+        print(f"  ang_meas={self._latest.get('boom_ang_deg_meas')} | ang={self._latest.get('boom_ang_deg')}")
+        print(f"  fault={self._latest.get('boom_fault')} | fault_code={self._latest.get('boom_fault_code')}")
+    
+        print("\n🟡 BALLAST:")
+        print(f"  pos_meas={self._latest.get('ballast_pos_mm_meas')} | pos={self._latest.get('ballast_pos_mm')}")
+        print(f"  ang_meas={self._latest.get('ballast_ang_deg_meas')} | ang={self._latest.get('ballast_ang_deg')}")
+        print(f"  fault={self._latest.get('ballast_fault')} | fault_code={self._latest.get('ballast_fault_code')}")
+    
+        print("\n🔴 PRESSURES:")
+        print(f"  ph1a={self._latest.get('ph1a_p_bar')} | ph1b={self._latest.get('ph1b_p_bar')} | pl1a={self._latest.get('pl1a_p_bar')} | pl1b={self._latest.get('pl1b_p_bar')}")
+        print(f"  status: ph1a={self._latest.get('ph1a_status')} | ph1b={self._latest.get('ph1b_status')} | pl1a={self._latest.get('pl1a_status')} | pl1b={self._latest.get('pl1b_status')}")
+        
+        print("\n🟣 CYLINDER PRESSURES (PressurePair):")
+        print(f"  FONDELLO -> " f"P1={self._latest.get('fondello_p1_bar')} | " f"P2={self._latest.get('fondello_p2_bar')} | "f"P_used={self._latest.get('fondello_p_used_bar')}")
+        print(f"  STELO -> " f"P1={self._latest.get('stelo_p1_bar')} | " f"P2={self._latest.get('stelo_p2_bar')} | " f"P_used={self._latest.get('stelo_p_used_bar')}")
+        
+        print("\n⚡ SUPPLY:")
+        print(f"  ph1a_us={self._latest.get('ph1a_us_v')} | ph1b_us={self._latest.get('ph1b_us_v')} | pl1a_us={self._latest.get('pl1a_us_v')} | pl1b_us={self._latest.get('pl1b_us_v')}")
+        print(f"  uout: ph1a={self._latest.get('ph1a_uout_v')} | ph1b={self._latest.get('ph1b_uout_v')} | pl1a={self._latest.get('pl1a_uout_v')} | pl1b={self._latest.get('pl1b_uout_v')}")
+    
+        print("\n📦 LOAD MODEL:")
+        print(f"  m_model={self._latest.get('m_model_kg')} | m_empty={self._latest.get('m_empty_kg')} | m_net={self._latest.get('m_net_kg')} | m_load={self._latest.get('m_load_kg')}")
+        print(f"  k_gain={self._latest.get('k_gain')}")
+    
+        print("\n temporanei:")
+        print("CAL REF:", self._latest.get("g_m_ref_kg"))
+        print("CAL EMPTY INTERP:", self._latest.get("m_empty_interp_kg"))
+
+        print("="*70 + "\n")
+
 
         act_table = self._latest.get("act_table")
         if act_table in (None, ""):
@@ -187,45 +228,101 @@ class OpcUaSource(QtCore.QObject):
             cap_dbg_v01=self._fo("interp_v01"),
             cap_dbg_v11=self._fo("interp_v11"),
         )
-
+        # copia tutti i valori raw letti da OPC-UA nello snapshot finale
+        for key, value in self._latest.items():
+            setattr(d, key, value)
         # --- campi aggiuntivi per calibration.py ---
         extras = {
-            "calib_enable": bool(self._latest.get("calib_enable")),
-            "calib_mode_empty": bool(self._latest.get("calib_mode_empty")),
-            "calib_step": self._io("calib_step"),
-            "calib_status_text": self._latest.get("calib_status_text"),
+            "cal_enable": bool(self._latest.get("cal_enable")),
+            "calib_enable": bool(self._latest.get("cal_enable")),
 
-            "calib_curr_alpha_deg": self._fo("calib_curr_alpha_deg"),
-            "calib_curr_l_mm": self._fo("calib_curr_l_mm"),
+            "cal_mode_empty": bool(self._latest.get("cal_mode_empty")),
+            "calib_mode_empty": bool(self._latest.get("cal_mode_empty")),
 
-            "calib_target_alpha_deg": self._fo("calib_target_alpha_deg"),
-            "calib_target_l_mm": self._fo("calib_target_l_mm"),
+            "cal_step": self._io("cal_step"),
+            "calib_step": self._io("cal_step"),
 
-            "calib_err_alpha_deg": self._fo("calib_err_alpha_deg"),
-            "calib_err_l_mm": self._fo("calib_err_l_mm"),
+            "cal_status_text": self._latest.get("cal_status_text"),
+            "calib_status_text": self._latest.get("cal_status_text"),
 
-            "calib_alpha_tol_deg": self._fo("calib_alpha_tol_deg"),
-            "calib_l_tol_mm": self._fo("calib_l_tol_mm"),
+            "cal_curr_alpha_deg": self._fo("cal_curr_alpha_deg"),
+            "calib_curr_alpha_deg": self._fo("cal_curr_alpha_deg"),
 
-            "calib_alpha_stable_tol_deg": self._fo("calib_alpha_stable_tol_deg"),
-            "calib_l_stable_tol_mm": self._fo("calib_l_stable_tol_mm"),
+            "cal_curr_l_mm": self._fo("cal_curr_l_mm"),
+            "calib_curr_l_mm": self._fo("cal_curr_l_mm"),
 
-            "calib_stable_cycles_req": self._io("calib_stable_cycles_req"),
-            "calib_stable_count": self._io("calib_stable_count"),
+            "cal_target_alpha_deg": self._fo("cal_target_alpha_deg"),
+            "calib_target_alpha_deg": self._fo("cal_target_alpha_deg"),
 
-            "calib_in_tolerance": bool(self._latest.get("calib_in_tolerance")),
-            "calib_is_stable": bool(self._latest.get("calib_is_stable")),
-            "calib_ready_to_store": bool(self._latest.get("calib_ready_to_store")),
+            "cal_target_l_mm": self._fo("cal_target_l_mm"),
+            "calib_target_l_mm": self._fo("cal_target_l_mm"),
 
-            "calib_last_store_ok": bool(self._latest.get("calib_last_store_ok")),
-            "calib_last_stored_value": self._fo("calib_last_stored_value"),
+            "cal_err_alpha_deg": self._fo("cal_err_alpha_deg"),
+            "calib_err_alpha_deg": self._fo("cal_err_alpha_deg"),
 
-            "calib_active_i_alpha": self._io("calib_active_i_alpha"),
-            "calib_active_i_l": self._io("calib_active_i_l"),
+            "cal_err_l_mm": self._fo("cal_err_l_mm"),
+            "calib_err_l_mm": self._fo("cal_err_l_mm"),
 
-            "calib_error_tolerance": bool(self._latest.get("calib_error_tolerance")),
-            "calib_error_state": bool(self._latest.get("calib_error_state")),
-            "calib_store_cmd": bool(self._latest.get("calib_store_cmd")),
+            "cal_alpha_tol_deg": self._fo("cal_alpha_tol_deg"),
+            "calib_alpha_tol_deg": self._fo("cal_alpha_tol_deg"),
+
+            "cal_l_tol_mm": self._fo("cal_l_tol_mm"),
+            "calib_l_tol_mm": self._fo("cal_l_tol_mm"),
+
+            "cal_alpha_stable_tol_deg": self._fo("cal_alpha_stable_tol_deg"),
+            "calib_alpha_stable_tol_deg": self._fo("cal_alpha_stable_tol_deg"),
+
+            "cal_l_stable_tol_mm": self._fo("cal_l_stable_tol_mm"),
+            "calib_l_stable_tol_mm": self._fo("cal_l_stable_tol_mm"),
+
+            "cal_stable_cycles_req": self._io("cal_stable_cycles_req"),
+            "calib_stable_cycles_req": self._io("cal_stable_cycles_req"),
+
+            "cal_stable_count": self._io("cal_stable_count"),
+            "calib_stable_count": self._io("cal_stable_count"),
+
+            "cal_in_tolerance": bool(self._latest.get("cal_in_tolerance")),
+            "calib_in_tolerance": bool(self._latest.get("cal_in_tolerance")),
+
+            "cal_is_stable": bool(self._latest.get("cal_is_stable")),
+            "calib_is_stable": bool(self._latest.get("cal_is_stable")),
+
+            "cal_ready_to_store": bool(self._latest.get("cal_ready_to_store")),
+            "calib_ready_to_store": bool(self._latest.get("cal_ready_to_store")),
+
+            "cal_last_store_ok": bool(self._latest.get("cal_last_store_ok")),
+            "calib_last_store_ok": bool(self._latest.get("cal_last_store_ok")),
+
+            "cal_last_stored_value": self._fo("cal_last_stored_value"),
+            "calib_last_stored_value": self._fo("cal_last_stored_value"),
+
+            "cal_active_i_alpha": self._io("cal_active_ialpha"),
+            "calib_active_i_alpha": self._io("cal_active_ialpha"),
+
+            "cal_active_i_l": self._io("cal_active_il"),
+            "calib_active_i_l": self._io("cal_active_il"),
+
+            "cal_error_tolerance": bool(self._latest.get("cal_error_tolerance")),
+            "calib_error_tolerance": bool(self._latest.get("cal_error_tolerance")),
+
+            "cal_error_state": bool(self._latest.get("cal_error_state")),
+            "calib_error_state": bool(self._latest.get("cal_error_state")),
+
+            "cal_store_cmd": bool(self._latest.get("cal_store_cmd")),
+            "calib_store_cmd": bool(self._latest.get("cal_store_cmd")),
+
+            "g_m_ref_kg": self._fo("g_m_ref_kg"),
+            "m_ref_kg": self._fo("g_m_ref_kg"),
+            "calib_m_ref_kg": self._fo("g_m_ref_kg"),
+
+            "g_m_model_kg": self._fo("g_m_model_kg"),
+            "m_model_kg": self._fo("g_m_model_kg"),
+
+            "m_empty_interp_kg": self._fo("m_empty_interp_kg") or self._fo("m_empty_kg"),
+            "calib_m_empty_interp_kg": self._fo("m_empty_interp_kg") or self._fo("m_empty_kg"),
+
+            "m_net_kg": self._fo("m_net_kg"),
+            "calib_m_net_kg": self._fo("m_net_kg"),
         }
 
         for key, value in extras.items():
