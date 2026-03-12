@@ -156,7 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
             """
         )
 
-        subtitle = QtWidgets.QLabel("Commissioning (read-only)")
+        subtitle = QtWidgets.QLabel("Commissioning ")
         subtitle.setStyleSheet(
             """
             QLabel {
@@ -216,10 +216,57 @@ class MainWindow(QtWidgets.QMainWindow):
             self.nav_buttons[0].setChecked(True)
         self.stack.setCurrentIndex(0)
 
+        self._wire_calibration_page()
+
     def set_page(self, index: int):
         self.stack.setCurrentIndex(index)
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
+
+    def _wire_calibration_page(self):
+        page = self.page_calibration
+
+        # abilita i comandi operatore sulla pagina calibration
+        if hasattr(page, "set_read_only"):
+            page.set_read_only(False)
+
+        # collegamenti UI -> MainWindow
+        if hasattr(page, "enableRequested"):
+            page.enableRequested.connect(self._on_cal_enable_requested)
+
+        if hasattr(page, "modeEmptyRequested"):
+            page.modeEmptyRequested.connect(self._on_cal_mode_empty_requested)
+
+        if hasattr(page, "storeRequested"):
+            page.storeRequested.connect(self._on_cal_store_requested)
+
+        if hasattr(page, "resetRequested"):
+            page.resetRequested.connect(self._on_cal_reset_requested)
+
+    def _on_cal_enable_requested(self, value: bool):
+        if self._source is not None and hasattr(self._source, "write_tag"):
+            self._source.write_tag("cal_enable", value)
+
+    def _on_cal_mode_empty_requested(self, value: bool):
+        if self._source is not None and hasattr(self._source, "write_tag"):
+            self._source.write_tag("cal_mode_empty", value)
+
+    def _on_cal_store_requested(self):
+        if self._source is not None and hasattr(self._source, "write_tag"):
+            self._source.write_tag("cal_store_cmd", True)
+
+            try:
+                QtCore.QTimer.singleShot(
+                    150,
+                    lambda: self._source.write_tag("cal_store_cmd", False)
+                )
+            except Exception:
+                pass
+
+    def _on_cal_reset_requested(self):
+        if self._source is not None and hasattr(self._source, "write_tag"):
+            self._source.write_tag("cal_store_cmd", False)
+            self._source.write_tag("cal_enable", False)
 
     def set_data_source(self, source):
         self._source = source

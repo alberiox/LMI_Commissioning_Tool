@@ -86,152 +86,187 @@ class OpcUaSource(QtCore.QObject):
         return fallback
 
     def _emit_snapshot(self):
-        cur = int(self._latest.get("cur_sel") or 12)
+     d = Snapshot()
 
-        act_table = self._latest.get("act_table")
-        if act_table in (None, ""):
-            act_table = {
-                12: "12000",
-                13: "13000",
-                14: "14000",
-                15: "15000",
-                16: "16000",
-            }.get(cur, "---")
+    # ---------------------------------------------------------
+    # valori principali già usati dalle altre pagine
+    # ---------------------------------------------------------
+    for key, value in self._latest.items():
+        setattr(d, key, value)
 
-        supply_v = self._first_number(
-            "ph1a_us_v",
-            "ph1b_us_v",
-            "pl1a_us_v",
-            "pl1b_us_v",
-            fallback=0.0,
-        )
+    # ---------------------------------------------------------
+    # helpers locali
+    # ---------------------------------------------------------
+    def fo(key, default=None):
+        v = self._latest.get(key, default)
+        try:
+            if v is None:
+                return default
+            return float(v)
+        except Exception:
+            return default
 
-        d = LMIData(
-            ts=time.time(),
+    def io(key, default=None):
+        v = self._latest.get(key, default)
+        try:
+            if v is None:
+                return default
+            return int(v)
+        except Exception:
+            return default
 
-            util_pct=self._f("util_pct"),
-            warning=bool(self._latest.get("warning")),
-            overload=bool(self._latest.get("overload")),
-            near_limit=bool(self._latest.get("near_limit")),
-            cap_t=self._first_number("limiter_cap_t", "cap_t", fallback=0.0),
-            load_f_t=self._f("load_f_t"),
-            margin_t=self._f("margin_t"),
-            margin_pct=self._f("margin_pct"),
+    def bo(key, default=False):
+        v = self._latest.get(key, default)
+        try:
+            return bool(v)
+        except Exception:
+            return default
 
-            boom_pos_mm=self._f("boom_pos_mm"),
-            boom_ang_deg=self._f("boom_ang_deg"),
-            ballast_pos_mm=self._f("ballast_pos_mm"),
-            ballast_ang_deg=self._fo("ballast_ang_deg"),
-            dist_mm=self._f("distance_mm"),
-            height_mm=self._f("height_mm"),
+    def tx(key, default=""):
+        v = self._latest.get(key, default)
+        try:
+            if v is None:
+                return default
+            return str(v)
+        except Exception:
+            return default
 
-            cur_sel=cur,
-            act_table=str(act_table),
-            hyst_mm=self._fo("hyst_mm"),
+    # ---------------------------------------------------------
+    # calibration page - naming canonico + alias compatibilità
+    # ---------------------------------------------------------
+    extras = {
+        # ---------------------------
+        # stato wizard
+        # ---------------------------
+        "cal_enable": bo("cal_enable", False),
+        "calib_enable": bo("cal_enable", False),
 
-            ph1a_p_bar=self._f("ph1a_p_bar"),
-            ph1b_p_bar=self._f("ph1b_p_bar"),
-            pl1a_p_bar=self._f("pl1a_p_bar"),
-            pl1b_p_bar=self._f("pl1b_p_bar"),
-            supply_v=supply_v,
+        "cal_mode_empty": bo("cal_mode_empty", False),
+        "calib_mode_empty": bo("cal_mode_empty", False),
 
-            boom_fault=bool(self._latest.get("boom_fault")),
-            boom_fault_code=self._io("boom_fault_code") or 0,
-            ballast_fault=bool(self._latest.get("ballast_fault")),
-            ballast_fault_code=self._io("ballast_fault_code") or 0,
+        "cal_step": io("cal_step", 0),
+        "calib_step": io("cal_step", 0),
 
-            m_model_kg=self._first_number("g_m_model_kg", "m_model_kg", fallback=0.0),
-            m_empty_kg=self._f("m_empty_kg"),
-            k_gain=self._f("k_gain", 1.0),
-            m_net_kg=self._f("m_net_kg"),
-            m_load_kg=self._f("m_load_kg"),
-            m_load_t=self._first_number("m_load_ton", "m_load_t", fallback=0.0),
+        "cal_status_text": tx("cal_status_text", "Calibration idle."),
+        "calib_status_text": tx("cal_status_text", "Calibration idle."),
 
-            fondello_fault=bool(self._latest.get("fondello_fault")),
-            fondello_warn=bool(self._latest.get("fondello_warn")),
-            fondello_p1_bar=self._fo("fondello_p1_bar"),
-            fondello_p2_bar=self._fo("fondello_p2_bar"),
-            fondello_p_used_bar=self._fo("fondello_p_used_bar"),
+        # ---------------------------
+        # posizione / target
+        # ---------------------------
+        "cal_curr_alpha_deg": fo("cal_curr_alpha_deg"),
+        "calib_curr_alpha_deg": fo("cal_curr_alpha_deg"),
 
-            stelo_fault=bool(self._latest.get("stelo_fault")),
-            stelo_warn=bool(self._latest.get("stelo_warn")),
-            stelo_p1_bar=self._fo("stelo_p1_bar"),
-            stelo_p2_bar=self._fo("stelo_p2_bar"),
-            stelo_p_used_bar=self._fo("stelo_p_used_bar"),
+        "cal_curr_l_mm": fo("cal_curr_l_mm"),
+        "calib_curr_l_mm": fo("cal_curr_l_mm"),
 
-            boom_pos_mm_meas=self._fo("boom_pos_mm_meas"),
-            boom_ang_deg_meas=self._fo("boom_ang_deg_meas"),
-            ballast_pos_mm_meas=self._fo("ballast_pos_mm_meas"),
-            ballast_ang_deg_meas=self._fo("ballast_ang_deg_meas"),
+        "cal_target_alpha_deg": fo("cal_target_alpha_deg"),
+        "calib_target_alpha_deg": fo("cal_target_alpha_deg"),
 
-            ph1a_status=self._io("ph1a_status"),
-            ph1b_status=self._io("ph1b_status"),
-            pl1a_status=self._io("pl1a_status"),
-            pl1b_status=self._io("pl1b_status"),
+        "cal_target_l_mm": fo("cal_target_l_mm"),
+        "calib_target_l_mm": fo("cal_target_l_mm"),
 
-            ph1a_uout_v=self._fo("ph1a_uout_v"),
-            ph1b_uout_v=self._fo("ph1b_uout_v"),
-            pl1a_uout_v=self._fo("pl1a_uout_v"),
-            pl1b_uout_v=self._fo("pl1b_uout_v"),
+        "cal_err_alpha_deg": fo("cal_err_alpha_deg"),
+        "calib_err_alpha_deg": fo("cal_err_alpha_deg"),
 
-            interp_dist_m=self._fo("interp_dist_m"),
-            interp_radius_m=self._fo("interp_radius_m"),
-            interp_cap_t=self._fo("interp_cap_t"),
+        "cal_err_l_mm": fo("cal_err_l_mm"),
+        "calib_err_l_mm": fo("cal_err_l_mm"),
 
-            cap_dbg_id=self._io("interp_id"),
-            cap_dbg_ir=self._io("interp_ir"),
-            cap_dbg_td=self._fo("interp_td"),
-            cap_dbg_tr=self._fo("interp_tr"),
-            cap_dbg_v00=self._fo("interp_v00"),
-            cap_dbg_v10=self._fo("interp_v10"),
-            cap_dbg_v01=self._fo("interp_v01"),
-            cap_dbg_v11=self._fo("interp_v11"),
-        )
+        # ---------------------------
+        # nodo attivo
+        # ---------------------------
+        "cal_active_ialpha": io("cal_active_ialpha"),
+        "calib_active_i_alpha": io("cal_active_ialpha"),
+        "active_i_alpha": io("cal_active_ialpha"),
 
-        # --- campi aggiuntivi per calibration.py ---
-        extras = {
-            "calib_enable": bool(self._latest.get("calib_enable")),
-            "calib_mode_empty": bool(self._latest.get("calib_mode_empty")),
-            "calib_step": self._io("calib_step"),
-            "calib_status_text": self._latest.get("calib_status_text"),
+        "cal_active_il": io("cal_active_il"),
+        "calib_active_i_l": io("cal_active_il"),
+        "active_i_l": io("cal_active_il"),
 
-            "calib_curr_alpha_deg": self._fo("calib_curr_alpha_deg"),
-            "calib_curr_l_mm": self._fo("calib_curr_l_mm"),
+        # ---------------------------
+        # tolleranze
+        # ---------------------------
+        "cal_alpha_tol_deg": fo("cal_alpha_tol_deg"),
+        "calib_alpha_tol_deg": fo("cal_alpha_tol_deg"),
 
-            "calib_target_alpha_deg": self._fo("calib_target_alpha_deg"),
-            "calib_target_l_mm": self._fo("calib_target_l_mm"),
+        "cal_l_tol_mm": fo("cal_l_tol_mm"),
+        "calib_l_tol_mm": fo("cal_l_tol_mm"),
 
-            "calib_err_alpha_deg": self._fo("calib_err_alpha_deg"),
-            "calib_err_l_mm": self._fo("calib_err_l_mm"),
+        "cal_alpha_stable_tol_deg": fo("cal_alpha_stable_tol_deg"),
+        "calib_alpha_stable_tol_deg": fo("cal_alpha_stable_tol_deg"),
 
-            "calib_alpha_tol_deg": self._fo("calib_alpha_tol_deg"),
-            "calib_l_tol_mm": self._fo("calib_l_tol_mm"),
+        "cal_l_stable_tol_mm": fo("cal_l_stable_tol_mm"),
+        "calib_l_stable_tol_mm": fo("cal_l_stable_tol_mm"),
 
-            "calib_alpha_stable_tol_deg": self._fo("calib_alpha_stable_tol_deg"),
-            "calib_l_stable_tol_mm": self._fo("calib_l_stable_tol_mm"),
+        # ---------------------------
+        # stabilità / readiness
+        # ---------------------------
+        "cal_stable_cycles_req": io("cal_stable_cycles_req", 10),
+        "calib_stable_cycles_req": io("cal_stable_cycles_req", 10),
+        "stable_cycles_req": io("cal_stable_cycles_req", 10),
 
-            "calib_stable_cycles_req": self._io("calib_stable_cycles_req"),
-            "calib_stable_count": self._io("calib_stable_count"),
+        "cal_stable_count": io("cal_stable_count", 0),
+        "calib_stable_count": io("cal_stable_count", 0),
+        "stable_count": io("cal_stable_count", 0),
 
-            "calib_in_tolerance": bool(self._latest.get("calib_in_tolerance")),
-            "calib_is_stable": bool(self._latest.get("calib_is_stable")),
-            "calib_ready_to_store": bool(self._latest.get("calib_ready_to_store")),
+        "cal_in_tolerance": bo("cal_in_tolerance", False),
+        "calib_in_tolerance": bo("cal_in_tolerance", False),
+        "in_tolerance": bo("cal_in_tolerance", False),
 
-            "calib_last_store_ok": bool(self._latest.get("calib_last_store_ok")),
-            "calib_last_stored_value": self._fo("calib_last_stored_value"),
+        "cal_is_stable": bo("cal_is_stable", False),
+        "calib_is_stable": bo("cal_is_stable", False),
+        "is_stable": bo("cal_is_stable", False),
 
-            "calib_active_i_alpha": self._io("calib_active_i_alpha"),
-            "calib_active_i_l": self._io("calib_active_i_l"),
+        "cal_ready_to_store": bo("cal_ready_to_store", False),
+        "calib_ready_to_store": bo("cal_ready_to_store", False),
+        "ready_to_store": bo("cal_ready_to_store", False),
 
-            "calib_error_tolerance": bool(self._latest.get("calib_error_tolerance")),
-            "calib_error_state": bool(self._latest.get("calib_error_state")),
-            "calib_store_cmd": bool(self._latest.get("calib_store_cmd")),
-        }
+        # ---------------------------
+        # ultimo store
+        # ---------------------------
+        "cal_last_store_ok": bo("cal_last_store_ok", False),
+        "calib_last_store_ok": bo("cal_last_store_ok", False),
+        "last_store_ok": bo("cal_last_store_ok", False),
 
-        for key, value in extras.items():
-            setattr(d, key, value)
+        "cal_last_stored_value": fo("cal_last_stored_value"),
+        "calib_last_stored_value": fo("cal_last_stored_value"),
+        "last_stored_value": fo("cal_last_stored_value"),
 
-        self.updated.emit(d)
+        # ---------------------------
+        # errori / comandi
+        # ---------------------------
+        "cal_error_tolerance": bo("cal_error_tolerance", False),
+        "calib_error_tolerance": bo("cal_error_tolerance", False),
+
+        "cal_error_state": bo("cal_error_state", False),
+        "calib_error_state": bo("cal_error_state", False),
+
+        "cal_store_cmd": bo("cal_store_cmd", False),
+        "calib_store_cmd": bo("cal_store_cmd", False),
+
+        # ---------------------------
+        # masse / risultati
+        # ---------------------------
+        "g_m_ref_kg": fo("g_m_ref_kg"),
+        "m_ref_kg": fo("g_m_ref_kg"),
+        "calib_m_ref_kg": fo("g_m_ref_kg"),
+
+        "g_m_model_kg": fo("g_m_model_kg"),
+        "m_model_kg": fo("g_m_model_kg"),
+
+        "m_empty_interp_kg": fo("m_empty_interp_kg"),
+        "calib_m_empty_interp_kg": fo("m_empty_interp_kg"),
+
+        "m_net_kg": fo("m_net_kg"),
+        "calib_m_net_kg": fo("m_net_kg"),
+    }
+
+    # ---------------------------------------------------------
+    # export extras nel payload finale
+    # ---------------------------------------------------------
+    for key, value in extras.items():
+        setattr(d, key, value)
+
+    self.updated.emit(d)
 
     def _run_thread(self):
         try:

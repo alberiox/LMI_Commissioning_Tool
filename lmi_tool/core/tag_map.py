@@ -154,6 +154,17 @@ TAG_MAP = {
     "cal_target_alpha_deg": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.TargetAlphaDeg",
     "cal_target_l_mm": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.TargetL_mm",
     "cal_stable_count": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.StableCount",
+    # extra calibration/result values used by calibration page
+    "g_m_ref_kg": "ns=5;s=::AsGlobalPV:g_M_ref_kg",
+    "m_ref_kg": "ns=5;s=::AsGlobalPV:g_M_ref_kg",
+    "m_empty_interp_kg": "ns=5;s=::LoadLimite:M_empty_interp_kg",
+    "calib_m_empty_interp_kg": "ns=5;s=::LoadLimite:M_empty_interp_kg",
+    # aliases for calibration page compatibility
+    "calib_active_i_alpha": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.Active_iAlpha",
+    "calib_active_i_l": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.Active_iL",
+    "active_i_alpha": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.Active_iAlpha",
+    "active_i_l": "ns=5;s=::AsGlobalPV:g_LM_CalibHMI.Active_iL",
+
 }
 def build_flat_tag_map():
     return TAG_MAP.copy()

@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from PySide6 import QtWidgets
+from PySide6.QtGui import QFont
 
 from lmi_tool.datasource.opcua_source import OpcUaSource
 from lmi_tool.datasource.sim_source import SimSource
@@ -18,6 +19,14 @@ def load_config():
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+
+    # stile Qt più stabile per applicazioni desktop/HMI
+    app.setStyle("Fusion")
+
+    # font globale di fallback per evitare warning Qt:
+    # QFont::setPointSize: Point size <= 0 (-1)
+    app.setFont(QFont("Segoe UI", 10))
+
     app.setStyleSheet(APP_QSS)
 
     cfg = load_config()
